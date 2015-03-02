@@ -17,15 +17,15 @@ class PanelIssueHooks < Redmine::Hook::ViewListener
 	back = request.env['HTTP_REFERER']
 	
     if (issue_id)
-      issue = Issue.find(issue_id, :include => [:status])
+      issue = Issue.where(:id => issue_id).first()
 	  if (issue)
 		if (User.current.allowed_to?(:edit_issues, project))
 		  o = ''
-          statuses = issue.new_statuses_allowed_to(User.current)
-          if (!statuses.empty?)
+          @allowed_statuses = issue.new_statuses_allowed_to(User.current)
+          if (!@allowed_statuses.empty?)
 		    o << "<h3>#{l(:label_issue_change_status)}</h3>"
 			o << '<table class="issue_control_panel_status">'
-			statuses.each do |s|
+			@allowed_statuses.each do |s|
 				if (s != issue.status)
 					o << '<tr><td>'
 					o << link_to(s.name, {:controller => 'issues', :action => 'update', :id => issue, :issue => {:status_id => s}, :back_to => "/issues/show/"+issue_id, :authenticity_token => form_authenticity_token(request.session)}, :method => :put, :class => 'icon icon-move' )
@@ -44,7 +44,7 @@ class PanelIssueHooks < Redmine::Hook::ViewListener
 			assignables.each do |u|
 				if (u != issue.assigned_to)
 					o << '<tr><td>'
-					#o << avatar(u, :size => "14", :style => "float: left; margin-right: 2px;") if avatar(u, :size => "14") != nil
+					o << avatar(u, :size => "14", :style => "float: left; margin-right: 2px;") if avatar(u, :size => "14") != nil
 					o << link_to(u.name, {:controller => 'issues', :action => 'update', :id => issue, :issue => {:assigned_to_id => u}, :back_to => "/issues/show/"+issue_id, :authenticity_token => form_authenticity_token(request.session)}, :method => :put)
 					o << '</td></tr>'
 				end
